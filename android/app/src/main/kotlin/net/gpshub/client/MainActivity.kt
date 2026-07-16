@@ -1,4 +1,4 @@
-package org.traccar.client
+package net.gpshub.client
 
 import io.flutter.embedding.android.FlutterActivity
 
