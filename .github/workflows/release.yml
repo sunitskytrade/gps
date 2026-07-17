@@ -112,7 +112,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: net.gpshub.client
           releaseFiles: apk/app-release.apk
-          track: production
+          track: internal
           status: completed
 
   build-ios:
