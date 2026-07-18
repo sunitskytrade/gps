@@ -47,15 +47,23 @@ jobs:
           storeFile=../../../environment/android.keystore
           EOF
 
-      - name: Build APK
+      - name: Build APK and AAB
         run: |
           flutter pub get
           flutter build apk --release
+          flutter build appbundle --release
 
       - uses: actions/upload-artifact@v5
         with:
           name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: android-aab
+          path: build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 1
 
@@ -103,15 +111,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@v5
         with:
-          name: android-apk
-          path: apk
+          name: android-aab
+          path: aab
 
       - name: Upload to Google Play (production)
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: net.gpshub.client
-          releaseFiles: apk/app-release.apk
+          releaseFiles: aab/app-release.aab
           track: internal
           status: completed
 
