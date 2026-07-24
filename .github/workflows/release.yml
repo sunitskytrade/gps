@@ -121,7 +121,7 @@ jobs:
           packageName: net.gpshub.client
           releaseFiles: aab/app-release.aab
           track: Closed Testing
-          status: completed
+          status: draft
 
   build-ios:
     if: ${{ github.event_name == 'push' || inputs.platform != 'android' }}
