@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       platform:
-        description: Platforms to publish
+        description: Platforms to publish (apk-only = build signed APK artifact, no smoke test, no Play/iOS upload)
         type: choice
-        options: [both, android, ios]
+        options: [both, android, ios, apk-only]
         default: both
 
 env:
@@ -47,11 +47,14 @@ jobs:
           storeFile=../../../environment/android.keystore
           EOF
 
-      - name: Build APK and AAB
+      - name: Build APK
         run: |
           flutter pub get
           flutter build apk --release
-          flutter build appbundle --release
+
+      - name: Build AAB
+        if: ${{ github.event_name == 'push' || inputs.platform != 'apk-only' }}
+        run: flutter build appbundle --release
 
       - uses: actions/upload-artifact@v5
         with:
@@ -60,7 +63,19 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      - name: Rename APK for download
+        run: cp build/app/outputs/flutter-apk/app-release.apk gpshub-client.apk
+
+      - name: Upload downloadable signed APK
+        uses: actions/upload-artifact@v5
+        with:
+          name: gpshub-client-apk
+          path: gpshub-client.apk
+          if-no-files-found: error
+          retention-days: 14
+
       - uses: actions/upload-artifact@v5
+        if: ${{ github.event_name == 'push' || inputs.platform != 'apk-only' }}
         with:
           name: android-aab
           path: build/app/outputs/bundle/release/app-release.aab
@@ -69,6 +84,7 @@ jobs:
 
   smoke-test-android:
     needs: build-android
+    if: ${{ github.event_name == 'push' || inputs.platform != 'apk-only' }}
     runs-on: ubuntu-latest
     steps:
       - name: Enable KVM
@@ -124,7 +140,7 @@ jobs:
           status: draft
 
   build-ios:
-    if: ${{ github.event_name == 'push' || inputs.platform != 'android' }}
+    if: ${{ github.event_name == 'push' || inputs.platform == 'both' || inputs.platform == 'ios' }}
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v6
